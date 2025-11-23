@@ -532,6 +532,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+option(BUILD_LIBNLA "Build standalone NLA/CredSSP helper library" OFF)
+
 # Sub-directories
 
 if(WITH_THIRD_PARTY)
@@ -543,6 +545,10 @@ endif()
 
 # used in libfreerdp subfolder as well
 setfreerdpcmakeinstalldir(FREERDP_CMAKE_INSTALL_DIR "FreeRDP${FREERDP_VERSION_MAJOR}")
+
+if(BUILD_LIBNLA)
+  add_subdirectory(libNLA)
+endif()
 
 add_subdirectory(libfreerdp)
 
