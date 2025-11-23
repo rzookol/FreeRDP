@@ -19,7 +19,8 @@ static library (`libnla`) via the accompanying `CMakeLists.txt`.
 ## Integration sketch
 
 1. Enable the library by adding `add_subdirectory(libNLA)` to your top-level
-   CMake configuration (kept optional to avoid impacting existing builds).
+   CMake configuration (FreeRDP now enables `BUILD_LIBNLA` by default and uses
+   it to source the SSPI table for CredSSP/NLA).
 2. Link against the `libnla` target and drive the state machine by feeding
    server tokens into `libnla_process`, sending the returned tokens back to the
    peer until `LIBNLA_SUCCESS` is returned.

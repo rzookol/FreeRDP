@@ -37,6 +37,9 @@
 
 #include "utils.h"
 #include "credssp_auth.h"
+#ifdef WITH_LIBNLA
+#include <libnla/nla.h>
+#endif
 
 #define TAG FREERDP_TAG("core.auth")
 
@@ -67,10 +70,13 @@ struct rdp_credssp_auth
 	SecBuffer input_buffer;
 	SecBuffer output_buffer;
 	ULONG flags;
-	SecPkgContext_Sizes sizes;
-	SECURITY_STATUS sspi_error;
-	enum AUTH_STATE state;
-	char* pkgNameA;
+        SecPkgContext_Sizes sizes;
+        SECURITY_STATUS sspi_error;
+        enum AUTH_STATE state;
+        char* pkgNameA;
+#ifdef WITH_LIBNLA
+        libnla_context* nla;
+#endif
 };
 
 static const char* credssp_auth_state_string(const rdpCredsspAuth* auth)
@@ -92,7 +98,7 @@ static const char* credssp_auth_state_string(const rdpCredsspAuth* auth)
 }
 static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* message);
 static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth);
-static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* settings);
+static SecurityFunctionTable* auth_resolve_sspi_table(rdpCredsspAuth* auth, const rdpSettings* settings);
 
 static BOOL credssp_auth_update_name_cache(rdpCredsspAuth* auth, TCHAR* name)
 {
@@ -129,7 +135,7 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bind
 	if (!credssp_auth_update_name_cache(auth, pkg_name))
 		return FALSE;
 
-	auth->table = auth_resolve_sspi_table(settings);
+        auth->table = auth_resolve_sspi_table(auth, settings);
 	if (!auth->table)
 	{
 		WLog_ERR(TAG, "Unable to initialize sspi table");
@@ -757,14 +763,17 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 	free(krb_settings->armorCache);
 	free(krb_settings->pkinitX509Anchors);
 	free(krb_settings->pkinitX509Identity);
-	free(ntlm_settings->samFile);
+        free(ntlm_settings->samFile);
 
-	free(auth->package_list);
-	free(auth->spn);
-	sspi_SecBufferFree(&auth->input_buffer);
-	sspi_SecBufferFree(&auth->output_buffer);
-	credssp_auth_update_name_cache(auth, NULL);
-	free(auth);
+        free(auth->package_list);
+        free(auth->spn);
+        sspi_SecBufferFree(&auth->input_buffer);
+        sspi_SecBufferFree(&auth->output_buffer);
+        credssp_auth_update_name_cache(auth, NULL);
+#ifdef WITH_LIBNLA
+        libnla_free(auth->nla);
+#endif
+        free(auth);
 }
 
 static void auth_get_sspi_module_from_reg(char** sspi_module)
@@ -805,11 +814,11 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	*sspi_module = module;
 }
 
-static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* settings)
+static SecurityFunctionTable* auth_resolve_sspi_table(rdpCredsspAuth* auth, const rdpSettings* settings)
 {
-	char* sspi_module = NULL;
+        char* sspi_module = NULL;
 
-	WINPR_ASSERT(settings);
+        WINPR_ASSERT(settings);
 
 	if (settings->ServerMode)
 		auth_get_sspi_module_from_reg(&sspi_module);
@@ -846,7 +855,26 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 		return InitSecurityInterface_ptr();
 	}
 
-	return InitSecurityInterfaceEx(0);
+        if (!auth)
+                return NULL;
+
+#ifdef WITH_LIBNLA
+        if (!auth->nla)
+                auth->nla = libnla_new();
+
+        if (auth->nla)
+        {
+                SecurityFunctionTable* table = NULL;
+                CtxtHandle* context = NULL;
+                if (libnla_table_and_context(auth->nla, &table, &context) == LIBNLA_SUCCESS)
+                {
+                        (void)context;
+                        return table;
+                }
+        }
+#endif
+
+        return InitSecurityInterfaceEx(0);
 }
 
 static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)

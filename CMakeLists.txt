@@ -532,7 +532,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-option(BUILD_LIBNLA "Build standalone NLA/CredSSP helper library" OFF)
+option(BUILD_LIBNLA "Build standalone NLA/CredSSP helper library" ON)
 
 # Sub-directories
 

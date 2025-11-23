@@ -263,3 +263,25 @@ void libnla_free(libnla_context* ctx)
     free(ctx);
 }
 
+libnla_status libnla_table_and_context(libnla_context* ctx, SecurityFunctionTable** table,
+                                      CtxtHandle** context)
+{
+    if (!ctx || !table || !context)
+        return LIBNLA_ERROR_INVALID_STATE;
+
+    if (!ctx->table)
+        ctx->table = InitSecurityInterfaceExA(0);
+
+    if (!ctx->table)
+        return LIBNLA_ERROR_NOT_INITIALIZED;
+
+    *table = ctx->table;
+    *context = ctx->haveContext ? &ctx->context : NULL;
+    return LIBNLA_SUCCESS;
+}
+
+int libnla_have_context(const libnla_context* ctx)
+{
+    return ctx && ctx->haveContext;
+}
+

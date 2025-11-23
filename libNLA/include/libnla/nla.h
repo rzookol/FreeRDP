@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <winpr/sspi.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,6 +66,19 @@ libnla_status libnla_reset(libnla_context* ctx);
  * Free a context allocated by libnla_new.
  */
 void libnla_free(libnla_context* ctx);
+
+/**
+ * Expose the underlying SSPI table and context handles so higher-level
+ * protocols (like FreeRDP's CredSSP implementation) can perform additional
+ * EncryptMessage/DecryptMessage calls on the negotiated session.
+ */
+libnla_status libnla_table_and_context(libnla_context* ctx, SecurityFunctionTable** table,
+                                      CtxtHandle** context);
+
+/**
+ * Returns non-zero if a security context has been established by libnla_process().
+ */
+int libnla_have_context(const libnla_context* ctx);
 
 #ifdef __cplusplus
 }
