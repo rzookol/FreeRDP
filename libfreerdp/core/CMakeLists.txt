@@ -143,7 +143,6 @@ set(${MODULE_PREFIX}_SRCS
     peer.h
     display.c
     display.h
-    credssp_auth.c
     credssp_auth.h
     rdstls.c
     rdstls.h

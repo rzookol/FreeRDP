@@ -214,6 +214,12 @@ endif()
 
 list(APPEND LIBFREERDP_PUB_LIBS winpr)
 
+if(BUILD_LIBNLA)
+  freerdp_include_directory_add(${PROJECT_SOURCE_DIR}/libNLA/include)
+  freerdp_library_add(libnla)
+  freerdp_definition_add(WITH_LIBNLA)
+endif()
+
 list(REMOVE_DUPLICATES LIBFREERDP_DEFINITIONS)
 list(REMOVE_DUPLICATES LIBFREERDP_INCLUDES)
 include_directories(SYSTEM ${LIBFREERDP_INCLUDES})
